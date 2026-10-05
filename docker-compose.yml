@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: db-dragonball-iec
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: dragonball_iec
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_iec:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: api-dragonball-iec
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: dragonball_iec
+      DB_USER: postgres
+      DB_PASSWORD: root
+    depends_on:
+      - db
+
+volumes:
+  pgdata_iec:
