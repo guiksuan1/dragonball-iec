@@ -1,99 +1,90 @@
-# 🐉 Dragon Ball API (LDW)
+# 🐉 Dragon Ball API - Integração e Entrega Contínua (IEC)
 
-API RESTful desenvolvida para a disciplina **LDW — Laboratório de Desenvolvimento Web**, com o tema **Universo Dragon Ball**. A aplicação permite o gerenciamento completo (CRUD) de guerreiros e personagens, com persistência relacional em PostgreSQL (hospedado na nuvem) utilizando Sequelize ORM e documentação interativa via Swagger UI.
+Projeto desenvolvido para a disciplina de **Integração e Entrega Contínua (IEC)**, utilizando o tema **Universo Dragon Ball**. Este repositório tem como foco a implementação de infraestrutura ágil, conteinerização de serviços, ferramentas de qualidade de código e automação de pipeline (CI/CD).
 
-## 🛠 Tecnologias Utilizadas
+---
 
-* **Linguagem:** Node.js com TypeScript
+## 🛠 Tecnologias e Ferramentas
 
-* **Framework Web:** Express
+- **Linguagem & Backend:** Node.js com TypeScript, Express
+- **Banco de Dados & ORM:** PostgreSQL, Sequelize
+- **Conteinerização:** Docker e Docker Compose
+- **Qualidade de Código:** ESLint e Prettier
+- **Git Hooks:** Husky (validação local de *pre-commit*)
+- **Integração Contínua (CI):** GitHub Actions
 
-* **ORM:** Sequelize
-
-* **Banco de Dados:** PostgreSQL (Hospedado no Supabase)
-
-* **Documentação:** Swagger UI (`swagger-ui-express` e `swagger-jsdoc`)
-
-* **Segurança e Utilitários:** CORS e Dotenv
+---
 
 ## 📋 Pré-requisitos
 
 Antes de iniciar, certifique-se de ter instalado em sua máquina:
 
-* [Node.js](https://nodejs.org/) (versão 18 ou superior)
+- [Node.js](https://nodejs.org/) (versão 18 ou superior)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Git](https://git-scm.com/)
+- [pnpm](https://pnpm.io/) (ou npm)
 
-* [Git](https://git-scm.com/)
+---
 
-* [pnpm](https://pnpm.io/) (ou npm)
-
-## 🚀 Como Executar o Projeto
+## 🚀 Como Executar o Projeto (Local)
 
 ### 1. Clonar o repositório
 
-```
-git clone https://github.com/guiksuan1/dragonball-api.git
-cd dragonball-api
-
-```
-
-### 2. Instalar dependências da API
-
-Acesse a pasta do backend e instale os pacotes:
-
-```
-cd backend
-pnpm install
-
+```bash
+git clone https://github.com/guiksuan1/dragonball-iec.git
+cd dragonball-iec
 ```
 
-### 3. Configurar as variáveis de ambiente
+### 2. Subir a Infraestrutura (Docker)
 
-Crie o arquivo `.env` dentro da pasta `backend` com base no `.env.example`. Substitua as credenciais pelas fornecidas pelo Supabase:
+Neste projeto, tanto a API quanto o Banco de Dados PostgreSQL rodam em contêineres gerenciados pelo Docker Compose. Para iniciar a orquestração, execute na raiz do projeto:
 
-```
-PORT=3000
-DB_HOST=db.SEU_PROJETO_ID.supabase.co
-DB_PORT=5432
-DB_NAME=postgres
-DB_USER=postgres
-DB_PASSWORD=sua_senha_segura
-DB_DIALECT=postgres
-DB_SSL=true
-
+```bash
+docker compose up -d --build
 ```
 
-*(Nota: O parâmetro `DB_SSL=true` é obrigatório para conexões seguras com o Supabase).*
+Isso fará o build da imagem do backend e iniciará os dois serviços simultaneamente (API e Banco de Dados).
 
-### 4. Executar as Migrations
+### 3. Testar a API
 
-Crie as tabelas necessárias no banco de dados em nuvem:
+Assim que os contêineres estiverem rodando (verifique com `docker ps` ou na interface do Docker Desktop), a API já estará disponível respondendo na porta 3000:
 
-```
-pnpm sequelize-cli db:migrate
+👉 **`http://localhost:3000/api/personagens`**
 
-```
+---
 
-### 5. Iniciar a aplicação
+## 🛡️ Esteira de Qualidade e CI/CD
 
-Inicie o servidor em modo de desenvolvimento:
+### Husky (Bloqueio Local)
 
-```
-pnpm dev
+O projeto está configurado com o **Husky** para garantir que nenhum código com erro seja enviado para o repositório. Toda vez que você rodar um `git commit`, o Husky fará as seguintes validações automaticamente:
 
-```
+1. Formatação de código com Prettier.
+2. Análise estática com ESLint.
+3. Validação de tipagem do TypeScript (`tsc --noEmit`).
 
-A API estará disponível em: `http://localhost:3000`
+*Se houver erros (como quebras de tipagem), o commit será bloqueado imediatamente no seu terminal local.*
 
-## 📖 Documentação Interativa (Swagger UI)
+### GitHub Actions (Pipeline CI)
 
-Com o servidor em execução, acesse a documentação interativa pelo navegador:
-👉 **`http://localhost:3000/api-docs`**
+Ao enviar o código aprovado para o repositório (`git push`), o **GitHub Actions** dispara automaticamente a esteira de Integração Contínua (CI). O Workflow realiza as seguintes etapas em um ambiente Linux isolado:
+
+- Checkout do código.
+- Configuração do Node.js e instalação de dependências via `pnpm`.
+- Execução do Linter (`pnpm lint`).
+- Validação de Tipos (`pnpm typecheck`).
+- Build da aplicação (`pnpm build`).
+
+O status da esteira (Verde/Sucesso ou Vermelho/Falha) pode ser acompanhado diretamente na aba **Actions** do GitHub.
+
+---
 
 ## 🎯 Endpoints da API
 
-| **Método** | **Rota** | **Descrição** | **Status Sucesso** | 
-| **GET** | `/api/personagens` | Lista todos os guerreiros | `200 OK` | 
-| **GET** | `/api/personagens/:id` | Busca guerreiro por ID | `200 OK` | 
-| **POST** | `/api/personagens` | Cadastra um guerreiro | `201 Created` | 
-| **PUT** | `/api/personagens/:id` | Atualiza dados do guerreiro | `200 OK` | 
-| **DELETE** | `/api/personagens/:id` | Remove guerreiro pelo ID | `204 No Content` | 
+| Método | Rota | Descrição | Status Sucesso |
+|---|---|---|---|
+| **GET** | `/api/personagens` | Lista todos os guerreiros | `200 OK` |
+| **GET** | `/api/personagens/:id` | Busca guerreiro por ID | `200 OK` |
+| **POST** | `/api/personagens` | Cadastra um guerreiro | `201 Created` |
+| **PUT** | `/api/personagens/:id` | Atualiza dados do guerreiro | `200 OK` |
+| **DELETE** | `/api/personagens/:id` | Remove guerreiro pelo ID | `204 No Content` |
