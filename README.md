@@ -1,105 +1,92 @@
-# 🐉 Dragon Ball Full-Stack — LDW (FATEC)
+# 🐉 Dragon Ball API — AT2 de IEC (Docker, GitHub Actions & Render)
 
-Projeto Full-Stack desenvolvido para a disciplina **LDW (Laboratório de Desenvolvimento Web)** da FATEC, com o tema **Universo Dragon Ball**:
+Projeto de backend desenvolvido para a **AT2 da disciplina IEC (Integração e Entrega Contínua)** da FATEC, implementando uma esteira completa de **CI/CD** com **Node.js, Express 5, TypeScript, Sequelize, PostgreSQL (Supabase), Docker, GitHub Actions** e **Deploy Contínuo no Render via Webhook**.
 
-- **`backend/` (AT1)** — API RESTful em Node.js, Express 5, TypeScript, Sequelize ORM, PostgreSQL e Swagger UI.
-- **`frontend/` (AT2)** — Aplicação SPA em React 19, TypeScript estrito, Vite, Tailwind CSS v4, **shadcn/ui**, React Router DOM e Sonner (toasts), com operações completas de CRUD conectadas à API.
+---
+
+## 🌐 API em Produção (Render)
+
+> ⚠️ **Atualize o link abaixo após criar o Web Service no Render:**
+
+- **URL Base:** `https://SEU-SERVICO.onrender.com`
+- **Health Check:** `https://SEU-SERVICO.onrender.com/api/health`
+- **Personagens (CRUD):** `https://SEU-SERVICO.onrender.com/api/personagens`
+- **Documentação Swagger:** `https://SEU-SERVICO.onrender.com/api-docs`
 
 ---
 
 ## 🗂 Estrutura do Repositório
 
 ```text
-dragonball-api/
+dragonball-iec/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml          # Pipeline CI/CD (CI + Docker Build + Deploy Hook Render)
 ├── backend/
 │   ├── src/
-│   │   ├── config/             # Conexão PostgreSQL e Swagger
+│   │   ├── config/             # Conexão PostgreSQL/SSL e Swagger
 │   │   ├── controllers/        # Regras de negócio CRUD
 │   │   ├── migrations/         # Migrations Sequelize
 │   │   ├── models/             # Modelo Personagem
 │   │   ├── routes/             # Rotas /api/personagens
 │   │   └── server.ts           # Servidor Express + /api/health
+│   ├── Dockerfile              # Build multi-stage (node:24-alpine)
+│   ├── .dockerignore
 │   └── .env.example
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── ui/             # Componentes shadcn/ui (Card, Button, Input, Dialog, Table, Badge, Sonner...)
-│   │   │   ├── AppLayout.tsx   # Layout compartilhado com barra de navegação
-│   │   │   ├── PersonagemDialog.tsx
-│   │   │   └── DeletePersonagemDialog.tsx
-│   │   ├── lib/utils.ts
-│   │   ├── pages/
-│   │   │   ├── Dashboard.tsx   # Listagem CRUD, métricas, busca, Loading e Empty States
-│   │   │   └── Sobre.tsx       # Status /api/health e documentação de endpoints
-│   │   ├── services/api.ts     # Cliente HTTP (Fetch API)
-│   │   ├── types/personagem.ts # Interfaces TypeScript
-│   │   └── App.tsx             # React Router DOM + <Toaster />
-│   └── .env.example
-└── docker-compose.yml          # PostgreSQL local (opcional)
+├── docker-compose.yml          # PostgreSQL local (opcional)
+└── README.md
 ```
 
 ---
 
-## 📋 Pré-requisitos
+## ⚙️ Esteira de CI/CD (GitHub Actions)
 
-- [Node.js](https://nodejs.org/) (v20+ / v24 recomendado)
-- [pnpm](https://pnpm.io/) (ou npm)
-- [Git](https://git-scm.com/)
-- PostgreSQL (local ou em nuvem, como Supabase)
+O workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) é disparado automaticamente em todo `push` na branch `main`:
+
+1. **Integração Contínua (CI):** instala dependências (`pnpm install --frozen-lockfile`), executa checagem estática de tipos (`tsc --noEmit`) e compila o projeto TypeScript (`pnpm run build`).
+2. **Validação de Contêiner (CD):** executa `docker build -t dragonball-api:ci ./backend` para validar a imagem Docker de produção.
+3. **Implantação Contínua no Render:** apenas se as etapas anteriores passarem, dispara o Deploy Hook via `curl -X POST` usando o segredo `RENDER_DEPLOY_HOOK_URL` (com **Auto-Deploy** desativado no Render) e valida retorno HTTP `200`/`201`.
 
 ---
 
-## 🚀 Como Executar Localmente (Backend + Frontend)
+## 🚀 Como Executar Localmente
 
-### 1. Clonar o repositório
+### 1. Clonar o repositório e instalar dependências
 ```bash
-git clone https://github.com/guiksuan1/dragonball-api.git
-cd dragonball-api
-```
-
-### 2. Configurar e executar o Backend (Terminal 1)
-```bash
-cd backend
+git clone https://github.com/guiksuan1/dragonball-iec.git
+cd dragonball-iec/backend
 pnpm install
 ```
 
-Crie o arquivo `backend/.env` com base em `backend/.env.example`:
+### 2. Configurar variáveis de ambiente
+Crie `backend/.env` com base em `backend/.env.example`:
 ```env
 PORT=3000
-DB_HOST=localhost
+DB_HOST=seu-host.pooler.supabase.com
 DB_PORT=5432
-DB_NAME=dragonball_api
-DB_USER=postgres
+DB_NAME=postgres
+DB_USER=postgres.seu-projeto
 DB_PASSWORD=SUA_SENHA_AQUI
 DB_DIALECT=postgres
-DB_SSL=false
+DB_SSL=true
 ```
-*(Use `DB_SSL=true` caso esteja utilizando um banco PostgreSQL em nuvem, como o Supabase.)*
+*(Use `DB_SSL=false` caso utilize PostgreSQL local via `docker-compose.yml`.)*
 
-Execute as migrations e inicie o servidor:
-```bash
-pnpm sequelize-cli db:migrate
-pnpm dev
-```
-A API estará disponível em `http://localhost:3000` (Swagger em `http://localhost:3000/api-docs`).
-
-### 3. Configurar e executar o Frontend SPA (Terminal 2)
-Em outro terminal, a partir da raiz do projeto:
-```bash
-cd frontend
-pnpm install
-```
-
-Crie o arquivo `frontend/.env` com base em `frontend/.env.example`:
-```env
-VITE_API_URL=http://localhost:3000
-```
-
-Inicie o servidor de desenvolvimento Vite:
+### 3. Executar em modo de desenvolvimento
 ```bash
 pnpm dev
 ```
-A interface React estará disponível em `http://localhost:5173`.
+A API estará disponível em `http://localhost:3000` (Health Check em `/api/health` e Swagger em `/api-docs`).
+
+---
+
+## 🐳 Execução com Docker
+
+A partir da raiz do repositório:
+```bash
+docker build -t dragonball-api ./backend
+docker run --env-file ./backend/.env -p 3000:3000 dragonball-api
+```
 
 ---
 

@@ -1,0 +1,92 @@
+name: CI/CD - Dragon Ball API (Docker + Render)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: cd-production-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ============================================================================
+  # 1. Integração Contínua (CI) - Checagem de Tipos e Build
+  # ============================================================================
+  ci:
+    name: 1. Integração Contínua (CI)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Código-Fonte
+        uses: actions/checkout@v4
+
+      - name: Configurar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Configurar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Instalar Dependências do Backend
+        working-directory: ./backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Checagem Estática de Tipos (tsc --noEmit)
+        working-directory: ./backend
+        run: pnpm run type-check
+
+      - name: Compilar Projeto TypeScript (Build)
+        working-directory: ./backend
+        run: pnpm run build
+
+  # ============================================================================
+  # 2. Validação de Contêiner (CD) - Build da Imagem Docker
+  # ============================================================================
+  docker-build:
+    name: 2. Validação do Build Docker (CD)
+    needs: [ci]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do Código-Fonte
+        uses: actions/checkout@v4
+
+      - name: Construir Imagem Docker de Produção
+        run: docker build -t dragonball-api:ci ./backend
+
+  # ============================================================================
+  # 3. Implantação Contínua (CD) - Disparo do Deploy Hook no Render
+  # ============================================================================
+  deploy-render:
+    name: 3. Deploy Contínuo no Render (Webhook)
+    needs: [docker-build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Disparar Deploy Hook no Render e Validar Status HTTP
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "Erro: secret RENDER_DEPLOY_HOOK_URL não configurado no repositório."
+            exit 1
+          fi
+
+          HTTP_STATUS=$(curl -sS -o /tmp/render_response.txt -w "%{http_code}" -X POST "$RENDER_DEPLOY_HOOK_URL")
+          echo "Status HTTP retornado pelo Render: $HTTP_STATUS"
+          cat /tmp/render_response.txt
+          echo ""
+
+          if [ "$HTTP_STATUS" -ne 200 ] && [ "$HTTP_STATUS" -ne 201 ]; then
+            echo "Falha ao acionar o Deploy Hook do Render (HTTP $HTTP_STATUS)."
+            exit 1
+          fi
+
+          echo "Deploy no Render acionado com sucesso!"
