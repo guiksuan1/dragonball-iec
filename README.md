@@ -6,12 +6,10 @@ Projeto de backend desenvolvido para a **AT2 da disciplina IEC (Integração e E
 
 ## 🌐 API em Produção (Render)
 
-> ⚠️ **Atualize o link abaixo após criar o Web Service no Render:**
-
-- **URL Base:** `https://SEU-SERVICO.onrender.com`
-- **Health Check:** `https://SEU-SERVICO.onrender.com/api/health`
-- **Personagens (CRUD):** `https://SEU-SERVICO.onrender.com/api/personagens`
-- **Documentação Swagger:** `https://SEU-SERVICO.onrender.com/api-docs`
+- **URL Base:** `https://dragonball-iec.onrender.com`
+- **Health Check:** `https://dragonball-iec.onrender.com/api/health`
+- **Personagens (CRUD):** `https://dragonball-iec.onrender.com/api/personagens`
+- **Documentação Swagger:** `https://dragonball-iec.onrender.com/api-docs`
 
 ---
 
