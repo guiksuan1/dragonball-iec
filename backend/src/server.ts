@@ -21,7 +21,7 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',
     uptime: Math.floor(process.uptime()),
-    mensagem: 'Servidor Dragon Ball operante!',
+    mensagem: 'Servidor Dragon Ball operante - AT2 IEC!',
     timestamp: new Date().toISOString(),
   });
 });
